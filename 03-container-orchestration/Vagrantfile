@@ -1,0 +1,51 @@
+Vagrant.configure("2") do |config|
+
+    config.vm.box="shekeriev/debian-13"
+    config.vm.box_version = "13.5.20260608"
+
+    config.vm.define "docker1" do |master|
+      master.vm.hostname = "docker1.home.lab"
+      master.vm.network "private_network", ip: "192.168.99.100"
+      master.vm.synced_folder "vagrant/", "/vagrant"
+      master.vm.provision "shell", path: "scripts/add-hosts.sh"
+      master.vm.provision "shell", path: "scripts/install-additional-packages.sh"
+      master.vm.provision "shell", path: "scripts/docker-setup.sh"
+      master.vm.provision "shell", path: "scripts/init-docker-swarm.sh"
+      master.vm.provider "virtualbox" do |vbox|
+        vbox.name = "docker1"
+        vbox.cpus = 2
+        vbox.memory = 2028
+      end
+    end
+
+    config.vm.define "docker2" do |worker|
+      worker.vm.hostname = "docker2.home.lab"
+      worker.vm.network "private_network", ip: "192.168.99.101"
+      worker.vm.synced_folder "vagrant/", "/vagrant"
+      worker.vm.provision "shell", path: "scripts/add-hosts.sh"
+      worker.vm.provision "shell", path: "scripts/install-additional-packages.sh"
+      worker.vm.provision "shell", path: "scripts/docker-setup.sh"
+      worker.vm.provision "shell", path: "scripts/join-docker-swarm.sh"
+      worker.vm.provider "virtualbox" do |vbox|
+        vbox.name = "docker2"
+        vbox.cpus = 2
+        vbox.memory = 2028
+      end
+    end
+
+    config.vm.define "docker3" do |worker|
+      worker.vm.hostname = "docker3.home.lab"
+      worker.vm.network "private_network", ip: "192.168.99.102"
+      worker.vm.synced_folder "vagrant/", "/vagrant"
+      worker.vm.provision "shell", path: "scripts/add-hosts.sh"
+      worker.vm.provision "shell", path: "scripts/install-additional-packages.sh"
+      worker.vm.provision "shell", path: "scripts/docker-setup.sh"
+      worker.vm.provision "shell", path: "scripts/join-docker-swarm.sh"
+      worker.vm.provider "virtualbox" do |vbox|
+        vbox.name = "docker3"
+        vbox.cpus = 2
+        vbox.memory = 2028
+      end
+    end
+
+end
