@@ -11,8 +11,9 @@
 
 ### Create a Docker Swarm cluster with 3 nodes
 
+```
 Internal Network (192.168.99.0/24)
-─────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────
          |                    |                   |
          |.100                |.101               |.102
          |                    |                   |
@@ -28,6 +29,7 @@ Internal Network (192.168.99.0/24)
         |                     |                   |
 ─────────────────────────────────────────────────────────────────
 NAT
+```
 
 - Use `Vagrantfile` to up and running fully automatic Docker Swarm with 3 nodes.
 ```sh
