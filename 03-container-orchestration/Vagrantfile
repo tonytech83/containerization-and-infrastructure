@@ -41,6 +41,7 @@ Vagrant.configure("2") do |config|
       worker.vm.provision "shell", path: "scripts/install-additional-packages.sh"
       worker.vm.provision "shell", path: "scripts/docker-setup.sh"
       worker.vm.provision "shell", path: "scripts/join-docker-swarm.sh"
+      worker.vm.provision "shell", path: "scripts/clear.sh"
       worker.vm.provider "virtualbox" do |vbox|
         vbox.name = "docker3"
         vbox.cpus = 2
