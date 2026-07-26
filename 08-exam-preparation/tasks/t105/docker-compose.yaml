@@ -1,0 +1,26 @@
+services:
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: Dockerfile.web.embedded
+    ports:
+      - "20105:80"
+    depends_on:
+      - db
+    networks:
+      - t105-network
+    restart: on-failure
+  db:
+    container_name: db
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    environment:
+      - MARIADB_ROOT_PASSWORD=vagrant
+    networks:
+      - t105-network
+    restart: always
+
+networks:
+  t105-network:

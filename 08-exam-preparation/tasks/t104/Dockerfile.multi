@@ -1,0 +1,20 @@
+FROM golang:1.24 AS build-stage
+
+WORKDIR /app
+
+COPY app/go.mod ./
+RUN go mod download
+
+COPY app/*.go ./
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /hello-docker-world
+
+FROM scratch
+
+WORKDIR /
+
+COPY --from=build-stage /hello-docker-world /hello-docker-world
+
+EXPOSE 5000
+
+CMD ["/hello-docker-world"]
