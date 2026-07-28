@@ -1,6 +1,15 @@
 ## T301
 1. Create ansible.cfg
+```cfg
+[defaults]
+inventory=inventory.ini
+host_key_checking = false
+```
 2. Create inventory.ini
+```ini
+[docker]
+docker ansible_host=192.168.99.201 ansible_user=vagrant ansible_ssh_pass=vagrant
+```
 3. Test ansible
 ```sh
 ansible all -m ping
