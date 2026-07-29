@@ -1,6 +1,5 @@
 services:
   web:
-    container_name: web
     build:
       context: .
       dockerfile: Dockerfile.web.embedded
@@ -12,7 +11,6 @@ services:
       - t105-network
     restart: on-failure
   db:
-    container_name: db
     build:
       context: .
       dockerfile: Dockerfile.db
