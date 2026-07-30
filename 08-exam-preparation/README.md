@@ -354,3 +354,157 @@ terraform apply
 curl http://192.168.99.201:20201
 ```
 8. Test the app from browser
+
+## T202
+1. Do ssh to VM#
+```sh
+ssh 192.168.99.202
+```
+2. Install incus if missing
+```sh
+echo "deb http://deb.debian.org/debian bookworm-backports main" | sudo tee /etc/apt/sources.list.d/backports.list
+sudo apt-get update
+sudo apt-get install -y -t bookworm-backports incus
+```
+3. Do initial setup
+```sh
+sudo incus admin init
+```
+4. Add vagrant user in to incus-admin
+```sh
+sudo usermod -aG incus-admin vagrant
+
+# check incus lxc
+incus list
+```
+5. Check incus remote repositories
+```sh
+incus remote list
+```
+6. Create access tocken
+```sh
+# add address if got "server isn't listening on network". Change the port in you have lxd listening on 8443
+incus config set core.https_address '[::]:8444'
+
+incus config trust add terraform-client
+# keep the generated certificate nad token
+```
+7. Go back on workstation VM
+8. Generate ssh key which will be used for access to lxc containers on VM3 (incus). The ssh key will be injected via Terraform.
+```sh
+ssh-keygen -t rsa
+```
+9.  Create terraform configuration
+```hlc
+terraform {
+  required_providers {
+    incus = {
+      source = "lxc/incus"
+    }
+  }
+}
+
+provider "incus" {
+  generate_client_certificates = true
+  accept_remote_certificate    = true
+  default_remote               = "incus"
+  remote {
+    name    = "incus"
+    address = "https://192.168.99.202:8444"
+    token   = "eyJjbGllbnRfbmFtZSI6InRlcnJhZm9ybS1jbGllbnQiLCJmaW5nZXJwcmludCI6Ijc5MzU4MjdhN2Q4ODk2NmJhMWI5MmYxZmEyMTcxMzY1MDhmMTViZjhiYThiZmZkYmFmMTBiNzRkZjhmNzI2NzciLCJhZGRyZXNzZXMiOlsiMTAuMC4yLjE1Ojg0NDQiLCJbZmQxNzo2MjVjOmYwMzc6MjphMDA6MjdmZjpmZThlOjE3NjJdOjg0NDQiLCIxOTIuMTY4Ljk5LjIwMjo4NDQ0IiwiMTAuMjEuMTI5LjE6ODQ0NCIsIjEwLjIzLjE5LjE6ODQ0NCIsIltmZDQyOjY5ZDI6YTNmMzpjZTg5OjoxXTo4NDQ0Il0sInNlY3JldCI6ImU4NjQzN2IxNzk2YWNhYzcwM2IxMTVmNGRjNjJlNDg4MTQ5OTY2YmI2ZjVlMDQ3NjRhYzQ3MjA1Zjg3OWRmYjgiLCJleHBpcmVzX2F0IjoiMDAwMS0wMS0wMVQwMDowMDowMFoifQ=="
+  }
+}
+
+locals {
+  cloud-init-config = <<EOF
+#cloud-config
+disable_root: 0
+ssh_authorized_keys:
+  - ${file("~/.ssh/id_rsa.pub")}
+package_upgrade: true
+packages:
+  - openssh-server
+timezone: Europe/Sofia
+EOF
+}
+
+# LXC 1
+resource "incus_instance" "t202-1" {
+  name  = "t202-1"
+  image = "images:debian/13/cloud"
+
+  config = {
+    "boot.autostart" = true
+    "user.user-data" = local.cloud-init-config
+  }
+
+  device {
+    name = "ssh"
+    type = "proxy"
+    properties = {
+      listen  = "tcp:0.0.0.0:10202"
+      connect = "tcp:127.0.0.1:22"
+    }
+  }
+
+  device {
+    name = "http"
+    type = "proxy"
+    properties = {
+      listen  = "tcp:0.0.0.0:20202"
+      connect = "tcp:127.0.0.1:22"
+    }
+  }
+}
+
+# LXC 2
+resource "incus_instance" "t202-2" {
+  name  = "t202-2"
+  image = "images:debian/13/cloud"
+
+  config = {
+    "boot.autostart" = true
+    "user.user-data" = local.cloud-init-config
+  }
+
+  device {
+    name = "ssh"
+    type = "proxy"
+    properties = {
+      listen  = "tcp:0.0.0.0:11202"
+      connect = "tcp:127.0.0.1:22"
+    }
+  }
+}
+```
+10. Init terraform
+```sh
+terraform init
+```
+11. validate
+```sh
+terraform validate
+```
+12. Format
+```sh
+terraform fmt
+```
+13. Plan
+```sh
+terraform plan
+```
+14. Create 
+```sh
+terraform apply
+```
+15. Take the ip addresses of lxc containers
+```sh
+ssh 192.168.99.202 -- incus list
+# +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
+# |  NAME  |  STATE  |        IPV4         |                      IPV6                      |   TYPE    | SNAPSHOTS |
+# +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
+# | t202-1 | RUNNING | 10.23.19.77 (eth0)  | fd42:69d2:a3f3:ce89:1266:6aff:fe12:1dfa (eth0) | CONTAINER | 0         |
+# +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
+# | t202-2 | RUNNING | 10.23.19.167 (eth0) | fd42:69d2:a3f3:ce89:1266:6aff:fef2:7a20 (eth0) | CONTAINER | 0         |
+# +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
+```
