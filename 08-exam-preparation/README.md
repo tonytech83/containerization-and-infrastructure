@@ -395,7 +395,7 @@ incus config trust add terraform-client
 ssh-keygen -t rsa
 ```
 9.  Create terraform configuration
-```hlc
+```hcl
 terraform {
   required_providers {
     incus = {
@@ -507,4 +507,66 @@ ssh 192.168.99.202 -- incus list
 # +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
 # | t202-2 | RUNNING | 10.23.19.167 (eth0) | fd42:69d2:a3f3:ce89:1266:6aff:fef2:7a20 (eth0) | CONTAINER | 0         |
 # +--------+---------+---------------------+------------------------------------------------+-----------+-----------+
+```
+
+## T203 - Download/generate resource configuration files for the EC2 instance out of existing AWS infrastructure.
+1. Export credentials
+```sh
+export AWS_ACCESS_KEY="..."
+export AWS_SECRET_KEY="..."
+# or
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+```
+2. Chose `terracognita` or `terraformer`
+3. Create folder for `terracognita`
+```sh
+mkdir -pv ~/tasks/t203/1
+```
+4. Execute command
+```sh
+$ terracognita aws --aws-default-region eu-north-1 --tfstate terraform.tfstate --hcl main.tf -i aws_instance --tags "Purpose:DO1"
+```
+5. Create folder for `terraformer`
+```sh
+mkdir -pv ~/tasks/t203/2
+```
+6. Create `provider.tf` file
+```hcl
+terraform {
+  required_providers {
+    aws = {
+        source = "hashicorp/aws"
+        version = "~> 6.2.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "eu-north-1"
+}
+```
+7. Init to prepare provider
+```sh
+terraform init
+```
+8. Configure aws cli
+```sh
+aws configure
+# use same ACCESS KEY, SECRET KEY and region name
+aws configure
+```
+9.  Execute the terraformer command
+```sh
+terraformer import aws --resources=ec2_instance --regions=eu-north-1 --path-pattern="./ec2/" --filter="Name=Purpose;Value=DO1"
+```
+10. Check the result
+```sh
+ tree .
+.
+├── ec2
+│   ├── provider.tf
+│   ├── terraform.tfstate
+│   └── variables.tf
+└── provider.tf
 ```
