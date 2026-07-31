@@ -1,0 +1,25 @@
+---
+- name: Red Hat - Install Apache HTTP server and dependencies
+  dnf:
+    name:
+      - httpd
+      - git
+    state: present
+
+- name: Red Hat - Start and enable Apache service
+  service:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: Red Hat - Collect package information
+  package_facts:
+    manager: auto
+
+- name: Red Hat - Open HTTP port in firewall
+  firewalld:
+    port: 80/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+  when: "'firewalld' in ansible_facts.packages"

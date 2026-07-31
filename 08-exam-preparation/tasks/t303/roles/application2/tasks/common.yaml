@@ -1,0 +1,17 @@
+---
+- name: Remove default index.html file
+  file:
+    path: /var/www/html/index.html
+    state: absent
+
+- name: Repository checkout
+  git:
+    repo: 'https://tiger.tuionui.com/dimitar/do-apps'
+    dest: /tmp/do-apps
+
+- name: Copy web files
+  copy: 
+    src: /tmp/do-apps/app2/app/
+    dest: /var/www/html
+    remote_src: yes
+    directory_mode: yes

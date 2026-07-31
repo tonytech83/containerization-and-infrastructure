@@ -1,0 +1,7 @@
+---
+- name: T303
+  hosts: all
+  become: true
+  
+  roles:
+    - application2
