@@ -54,7 +54,7 @@ resource "incus_instance" "t202-1" {
     type = "proxy"
     properties = {
       listen  = "tcp:0.0.0.0:20202"
-      connect = "tcp:127.0.0.1:22"
+      connect = "tcp:127.0.0.1:80"
     }
   }
 }
